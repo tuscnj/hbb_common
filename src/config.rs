@@ -50,7 +50,6 @@ pub const READ_TIMEOUT: u64 = 18_000;
 // https://www.onsip.com/voip-resources/voip-fundamentals/what-is-nat-keepalive
 pub const REG_INTERVAL: i64 = 15_000;
 pub const COMPRESS_LEVEL: i32 = 3;
-const SERIAL: i32 = 3;
 
 #[cfg(target_os = "macos")]
 lazy_static::lazy_static! {
@@ -242,8 +241,6 @@ pub struct Config2 {
     rendezvous_server: String,
     #[serde(default, deserialize_with = "deserialize_i32")]
     nat_type: i32,
-    #[serde(default, deserialize_with = "deserialize_i32")]
-    serial: i32,
     #[serde(default, deserialize_with = "deserialize_string")]
     unlock_pin: String,
     #[serde(default, deserialize_with = "deserialize_string")]
@@ -943,17 +940,6 @@ impl Config {
         if !s.is_empty() {
             return vec![s];
         }
-        let serial_obsolute = CONFIG2.read().unwrap().serial > SERIAL;
-        if serial_obsolute {
-            let ss: Vec<String> = Self::get_option("rendezvous-servers")
-                .split(',')
-                .filter(|x| x.contains('.'))
-                .map(|x| x.to_owned())
-                .collect();
-            if !ss.is_empty() {
-                return ss;
-            }
-        }
         return RENDEZVOUS_SERVERS.iter().map(|x| x.to_string()).collect();
     }
 
@@ -1002,19 +988,6 @@ impl Config {
 
     pub fn get_nat_type() -> i32 {
         CONFIG2.read().unwrap().nat_type
-    }
-
-    pub fn set_serial(serial: i32) {
-        let mut config = CONFIG2.write().unwrap();
-        if serial == config.serial {
-            return;
-        }
-        config.serial = serial;
-        config.store();
-    }
-
-    pub fn get_serial() -> i32 {
-        std::cmp::max(CONFIG2.read().unwrap().serial, SERIAL)
     }
 
     #[cfg(any(target_os = "android", target_os = "ios"))]

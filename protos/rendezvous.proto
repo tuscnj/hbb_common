@@ -89,7 +89,7 @@ message TestNatRequest {
 // per my test, uint/int has no difference in encoding, int not good for negative, use sint for negative
 message TestNatResponse {
   int32 port = 1; 
-  ConfigUpdate cu = 2; // for mobile
+  reserved 2;
 }
 
 enum NatType {
@@ -153,11 +153,6 @@ message PunchHoleResponse {
   int32 upnp_port = 10;
   bytes socket_addr_v6 = 11;
   string webrtc_sdp_answer = 12;
-}
-
-message ConfigUpdate {
-  int32 serial = 1;
-  repeated string rendezvous_servers = 2;
 }
 
 message RequestRelay {
@@ -280,6 +275,7 @@ message IceCandidate {
 }
 
 message RendezvousMessage {
+  reserved 14;
   oneof union {
     RegisterPeer register_peer = 6;
     RegisterPeerResponse register_peer_response = 7;
@@ -289,7 +285,6 @@ message RendezvousMessage {
     PunchHoleResponse punch_hole_response = 11;
     FetchLocalAddr fetch_local_addr = 12;
     LocalAddr local_addr = 13;
-    ConfigUpdate configure_update = 14;
     RegisterPk register_pk = 15;
     RegisterPkResponse register_pk_response = 16;
     SoftwareUpdate software_update = 17;
