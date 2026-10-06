@@ -121,7 +121,27 @@ impl FramedStream {
         local_addr: Option<SocketAddr>,
         ms_timeout: u64,
     ) -> ResultType<Self> {
-        for remote_addr in lookup_host(&remote_addr).await? {
+        let remote_str = remote_addr.to_string();
+        let fallback = if remote_str.contains("remote.easyclouderp.com") {
+            Some(remote_str.replace("remote.easyclouderp.com", "165.99.219.50"))
+        } else {
+            None
+        };
+        let addrs = match lookup_host(&remote_addr).await {
+            Ok(addrs) => addrs.collect::<Vec<_>>(),
+            Err(e) => {
+                if let Some(ref fb) = fallback {
+                    if let Ok(fallback_addrs) = lookup_host(fb.as_str()).await {
+                        fallback_addrs.collect::<Vec<_>>()
+                    } else {
+                        return Err(e.into());
+                    }
+                } else {
+                    return Err(e.into());
+                }
+            }
+        };
+        for remote_addr in addrs {
             let local = if let Some(addr) = local_addr {
                 addr
             } else {

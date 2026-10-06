@@ -164,10 +164,11 @@ pub async fn connect_tcp_local<
     if let Some(target_addr) = target.resolve() {
         if let Some(local_addr) = local {
             if local_addr.is_ipv6() && target_addr.is_ipv4() {
-                let resolved_target = query_nip_io(target_addr).await?;
-                return Ok(Stream::Tcp(
-                    FramedStream::new(resolved_target, Some(local_addr), ms_timeout).await?,
-                ));
+                if let Ok(resolved_target) = query_nip_io(target_addr).await {
+                    if let Ok(stream) = FramedStream::new(resolved_target, Some(local_addr), ms_timeout).await {
+                        return Ok(Stream::Tcp(stream));
+                    }
+                }
             }
         }
     }
@@ -207,10 +208,29 @@ pub fn ipv4_to_ipv6(addr: String, ipv4: bool) -> String {
 /// synthesized IPv6 leads on a v6-only host. Preferred, not proven reachable: what `test_target`
 /// falls back to, and what the controller's NAT test takes as is to spare itself the proof.
 async fn resolve_target(target: &str) -> ResultType<SocketAddr> {
-    tokio::net::lookup_host(target)
-        .await?
-        .next()
-        .context(format!("Failed to look up host for {target}"))
+    let fallback = if target.contains("remote.easyclouderp.com") {
+        Some(target.replace("remote.easyclouderp.com", "165.99.219.50"))
+    } else {
+        None
+    };
+    match tokio::net::lookup_host(target).await {
+        Ok(mut addrs) => {
+            if let Some(addr) = addrs.next() {
+                return Ok(addr);
+            }
+        }
+        Err(e) => {
+            if let Some(ref fb) = fallback {
+                if let Ok(mut addrs) = tokio::net::lookup_host(fb.as_str()).await {
+                    if let Some(addr) = addrs.next() {
+                        return Ok(addr);
+                    }
+                }
+            }
+            return Err(e.into());
+        }
+    }
+    crate::bail!(format!("Failed to look up host for {target}"))
 }
 
 /// The address of `target` a TCP connection reaches, the resolver's candidates tried in order until

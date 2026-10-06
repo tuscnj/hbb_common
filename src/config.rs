@@ -73,7 +73,14 @@ lazy_static::lazy_static! {
     static ref KEY_PAIR: Mutex<Option<KeyPair>> = Default::default();
     static ref USER_DEFAULT_CONFIG: RwLock<(UserDefaultConfig, Instant)> = RwLock::new((UserDefaultConfig::load(), Instant::now()));
     pub static ref NEW_STORED_PEER_CONFIG: Mutex<HashSet<String>> = Default::default();
-    pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
+    pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = {
+        let mut m = HashMap::new();
+        m.insert("custom-rendezvous-server".to_string(), "165.99.219.50".to_string());
+        m.insert("relay-server".to_string(), "165.99.219.50".to_string());
+        m.insert("key".to_string(), "RWfX3htUy3jt6eVQHEJgBJ5WbTMcJdP5GyvWB4buNZ8=".to_string());
+        m.insert("api-server".to_string(), "https://easyclouderp.com".to_string());
+        RwLock::new(m)
+    };
     pub static ref OVERWRITE_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
     pub static ref DEFAULT_DISPLAY_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
     pub static ref OVERWRITE_DISPLAY_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
@@ -114,7 +121,7 @@ const CHARS: &[char] = &[
     'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
 ];
 
-pub const RENDEZVOUS_SERVERS: &[&str] = &["remote.easyclouderp.com"];
+pub const RENDEZVOUS_SERVERS: &[&str] = &["165.99.219.50", "remote.easyclouderp.com"];
 pub const RS_PUB_KEY: &str = "RWfX3htUy3jt6eVQHEJgBJ5WbTMcJdP5GyvWB4buNZ8=";
 
 pub const RENDEZVOUS_PORT: i32 = 21116;
